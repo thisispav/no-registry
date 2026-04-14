@@ -7,14 +7,12 @@ import { BINARY_PATH } from '../lib/paths.js';
 
 const execFileAsync = promisify(execFile);
 
-const CLI_VERSION = '0.1.0';
-
 export function registerVersion(program: Command): void {
   program
     .command('version')
     .description('Show pkdns-cli and pkdns binary version')
     .action(async () => {
-      console.log(`pkdns-cli: ${chalk.cyan(CLI_VERSION)}`);
+      console.log(`pkdns-cli: ${chalk.cyan(program.version())}`);
 
       const installed = await isBinaryInstalled();
       if (!installed) {

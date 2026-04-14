@@ -12,3 +12,5 @@ export const META_FILE = path.join(PKDNS_DIR, 'pkdns-meta.json');
 export const VERSION_FILE = path.join(PKDNS_DIR, 'installed-version.json');
 /** CLI-specific metadata (mode, etc.) — separate from pkdns.toml */
 export const CLI_META_FILE = path.join(PKDNS_DIR, 'pkdns-cli.json');
+/** Cached result of the npm update check */
+export const UPDATE_CACHE_FILE = path.join(PKDNS_DIR, 'update-check.json');

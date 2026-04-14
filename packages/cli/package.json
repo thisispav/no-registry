@@ -1,6 +1,6 @@
 {
   "name": "pkdns-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Manage pkdns — self-sovereign DNS on Mainline DHT",
   "type": "module",
   "bin": {
