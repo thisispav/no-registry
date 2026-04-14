@@ -1051,51 +1051,45 @@
 <section id="setup">
   <div class="container">
     <div class="section-head">
-      <h2>Run your own. <span class="green">In 10 minutes (or less).</span></h2>
-      <p>Two paths. Pick the one that matches your setup.</p>
+      <h2>Run your own. <span class="green">In minutes.</span></h2>
+      <p>Two ways to install. Pick one.</p>
     </div>
 
     <div class="setup-tabs">
-      <button class="tab-btn active" onclick="switchTab('pihole', this)">
-        Pi-hole + PKDNS
-        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">Whole network · recommended</div>
+      <button class="tab-btn active" onclick="switchTab('sh', this)">
+        curl | sh
+        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">Installs a permanent binary · recommended</div>
       </button>
-      <button class="tab-btn" onclick="switchTab('docker', this)">
-        Docker only
-        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">Single machine · no Pi-hole needed</div>
+      <button class="tab-btn" onclick="switchTab('npm', this)">
+        npm / bunx
+        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">No install needed · run anywhere</div>
       </button>
     </div>
 
-    <!-- Tab: Pi-hole -->
-    <div id="tab-pihole" class="tab-panel active">
-      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">Prerequisites: Pi-hole already running · Docker installed on the same machine</p>
+    <!-- Tab: shell install -->
+    <div id="tab-sh" class="tab-panel active">
+      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">Downloads and installs the pkdns CLI to ~/.pkdns/bin and adds it to your PATH.</p>
       <div class="steps">
 
         <div class="step">
           <div class="step-num">01</div>
           <div class="step-content">
-            <h4>Pull the PKDNS Docker image</h4>
+            <h4>Install pkdns-cli</h4>
             <div class="code-block">
               <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre><span class="cmd">docker pull</span> <span class="val">synonymsoft/pkdns</span></pre>
+              <pre><span class="cmd">curl</span> <span class="flag">-fsSL</span> https://raw.githubusercontent.com/thisispav/no-registry/main/packages/cli/install.sh | sh</pre>
             </div>
+            <p style="margin-top:0.6rem;">Then open a new terminal (or run <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">source ~/.zshrc</code>) so <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">pkdns</code> is on your PATH.</p>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">02</div>
           <div class="step-content">
-            <h4>Run the PKDNS container</h4>
-            <p>Bind to port 5335 so it does not conflict with Pi-hole's own port 53. The <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">-f</code> flag sets the ICANN fallback for regular domains.</p>
+            <h4>Download the pkdns binary</h4>
             <div class="code-block">
               <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre><span class="cmd">docker run</span> <span class="flag">-d</span> \
-  <span class="flag">--name</span> pkdns \
-  <span class="flag">--restart</span> unless-stopped \
-  <span class="flag">-p</span> <span class="val">127.0.0.1:5335:53/udp</span> \
-  <span class="flag">-p</span> <span class="val">127.0.0.1:5335:53/tcp</span> \
-  <span class="val">synonymsoft/pkdns</span> \
-  <span class="flag">-f</span> <span class="val">8.8.8.8:53</span></pre>
+              <pre><span class="cmd">pkdns</span> install</pre>
             </div>
           </div>
         </div>
@@ -1103,74 +1097,57 @@
         <div class="step">
           <div class="step-num">03</div>
           <div class="step-content">
-            <h4>Point Pi-hole's upstream DNS to PKDNS</h4>
-            <p>In Pi-hole admin: <strong>Settings → DNS</strong>. Uncheck all existing upstream servers and add a custom IPv4 upstream:</p>
+            <h4>Configure</h4>
             <div class="code-block">
-              <div class="code-block-header"><span>upstream address</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre>127.0.0.1#5335</pre>
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">pkdns</span> init</pre>
             </div>
-            <p style="margin-top:0.5rem;">Save and apply. Pi-hole will now forward queries through your local PKDNS resolver.</p>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">04</div>
           <div class="step-content">
-            <h4>Test resolution</h4>
+            <h4>Start &amp; verify</h4>
             <div class="code-block">
               <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre><span class="comment"># Resolve a known PKARR address</span>
-<span class="cmd">nslookup</span> <span class="val">7fmjpcuuzf54hw18bsgi3zihzyh4awseeuq5tmojefaezjbd64cy</span> <span class="str">127.0.0.1</span>
-
-<span class="comment"># Confirm regular domains still resolve (ICANN fallback)</span>
-<span class="cmd">nslookup</span> <span class="val">example.com</span> <span class="str">127.0.0.1</span>
-
-<span class="comment"># Check the container is running</span>
-<span class="cmd">docker ps</span> <span class="flag">--filter</span> <span class="val">name=pkdns</span></pre>
+              <pre><span class="cmd">pkdns</span> start
+<span class="cmd">pkdns</span> test</pre>
             </div>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-num">05</div>
-          <div class="step-content">
-            <h4>You're done</h4>
-            <p>Every device on your network that uses Pi-hole as its DNS now resolves PKDNS addresses — with no registrar in the path, no authority to pressure, and no single point to seize.</p>
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Tab: Docker only -->
-    <div id="tab-docker" class="tab-panel">
-      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">No Pi-hole required. Run PKDNS as a standalone resolver on any machine with Docker.</p>
+    <!-- Tab: npm / bunx -->
+    <div id="tab-npm" class="tab-panel">
+      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">No install step. Use bunx (Bun) or npx (Node) to run pkdns-cli directly.</p>
       <div class="steps">
 
         <div class="step">
           <div class="step-num">01</div>
           <div class="step-content">
-            <h4>Pull and run</h4>
+            <h4>Run pkdns-cli</h4>
             <div class="code-block">
-              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre><span class="cmd">docker run</span> <span class="flag">-d</span> \
-  <span class="flag">--name</span> pkdns \
-  <span class="flag">--restart</span> unless-stopped \
-  <span class="flag">-p</span> <span class="val">53:53/udp</span> \
-  <span class="flag">-p</span> <span class="val">53:53/tcp</span> \
-  <span class="val">synonymsoft/pkdns</span> \
-  <span class="flag">-f</span> <span class="val">8.8.8.8:53</span></pre>
+              <div class="code-block-header"><span>bash — Bun</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">bunx</span> <span class="val">pkdns-cli</span> <span class="flag">--help</span></pre>
             </div>
+            <div class="code-block" style="margin-top:0.75rem;">
+              <div class="code-block-header"><span>bash — Node</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">npx</span> <span class="val">pkdns-cli</span> <span class="flag">--help</span></pre>
+            </div>
+            <p style="margin-top:0.6rem;">Replace <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">pkdns</code> with <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">bunx pkdns-cli</code> in every command below.</p>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">02</div>
           <div class="step-content">
-            <h4>Point your system DNS to localhost</h4>
+            <h4>Download the pkdns binary</h4>
             <div class="code-block">
-              <div class="code-block-header"><span>/etc/resolv.conf</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre>nameserver 127.0.0.1</pre>
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">bunx</span> <span class="val">pkdns-cli</span> install</pre>
             </div>
           </div>
         </div>
@@ -1178,10 +1155,22 @@
         <div class="step">
           <div class="step-num">03</div>
           <div class="step-content">
-            <h4>Test it</h4>
+            <h4>Configure</h4>
             <div class="code-block">
               <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
-              <pre><span class="cmd">nslookup</span> <span class="val">7fmjpcuuzf54hw18bsgi3zihzyh4awseeuq5tmojefaezjbd64cy</span> <span class="str">127.0.0.1</span></pre>
+              <pre><span class="cmd">bunx</span> <span class="val">pkdns-cli</span> init</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h4>Start &amp; verify</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">bunx</span> <span class="val">pkdns-cli</span> start
+<span class="cmd">bunx</span> <span class="val">pkdns-cli</span> test</pre>
             </div>
           </div>
         </div>
