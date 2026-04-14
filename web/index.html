@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>No Registry — PKDNS</title>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #CCFF00;
+      --black: #000000;
+      --card: #111111;
+      --border: #222222;
+      --white: #ffffff;
+      --muted: #888888;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Typography ─────────────────────────────────────────────*/
+    h1, h2, h3 { line-height: 1.1; font-weight: 900; letter-spacing: -0.02em; }
+    h1 { font-size: clamp(4rem, 11vw, 9rem); }
+    h2 { font-size: clamp(2.2rem, 5vw, 3.75rem); }
+    h3 { font-size: 1.1rem; font-weight: 700; }
+
+    p { color: #cccccc; }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .green { color: var(--green); }
+
+    /* ─── Layout ─────────────────────────────────────────────────*/
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      text-align: center;
+    }
+
+    /* wide container for table/code which look better wider */
+    .container-wide {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      text-align: center;
+    }
+
+    section { padding: 7rem 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; }
+
+    /* ─── Nav ────────────────────────────────────────────────────*/
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.05em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); text-decoration: none; }
+
+    /* ─── Hero ───────────────────────────────────────────────────*/
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-top: 5rem;
+      border-top: none;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-text h1 { margin-bottom: 1.5rem; }
+    .hero-text h1 span { display: block; color: var(--green); }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      color: #aaaaaa;
+      margin-bottom: 0.75rem;
+      max-width: 52ch;
+    }
+
+    .hero-body {
+      font-size: 0.95rem;
+      color: #777;
+      margin-bottom: 2.5rem;
+      max-width: 55ch;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 2rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      border: none;
+    }
+
+    .btn-primary { background: var(--green); color: var(--black); }
+    .btn-primary:hover { background: #d4ff1a; text-decoration: none; transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--white); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--muted); text-decoration: none; }
+
+    /* Domain callout */
+    .domain-callout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 2rem;
+      padding: 1.25rem 1.75rem;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0d0d0d;
+      max-width: 580px;
+    }
+
+    .domain-line {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #888;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .domain-reg {
+      color: #ffffff;
+      text-decoration: line-through;
+      text-decoration-color: #555;
+    }
+
+    .domain-bad {
+      color: #ff5555;
+      font-weight: 700;
+    }
+
+    .domain-ever {
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .domain-pkarr {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--green);
+      margin-top: 0.6rem;
+      word-break: break-all;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+
+    .domain-pkarr:hover { opacity: 0.8; text-decoration: none; }
+
+    /* Globe */
+    .globe-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 4rem;
+      width: 100%;
+    }
+
+    #globe-canvas {
+      width: 480px;
+      height: 480px;
+      display: block;
+    }
+
+    .globe-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: #444;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+
+    /* Stat bar */
+    .stat-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      margin-top: 4rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--green);
+      font-family: var(--font-mono);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ─── Section headings ───────────────────────────────────────*/
+    .section-head {
+      margin-bottom: 3rem;
+    }
+    .section-head p {
+      margin: 1rem auto 0;
+      max-width: 58ch;
+      font-size: 1.05rem;
+      color: #999;
+    }
+
+    /* ─── Problem section ────────────────────────────────────────*/
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .problem-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+    }
+
+    .problem-card .tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: #ff5555;
+      background: rgba(255,68,68,0.08);
+      border: 1px solid rgba(255,68,68,0.2);
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+    }
+
+    .problem-card h3 { margin-bottom: 0.6rem; font-size: 1rem; }
+    .problem-card p  { font-size: 0.875rem; color: #888; }
+
+    .example-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      text-align: left;
+    }
+
+    .example-list li {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .example-list li::before {
+      content: '//';
+      font-family: var(--font-mono);
+      color: #ff5555;
+      flex-shrink: 0;
+      padding-top: 0.15rem;
+    }
+
+    /* ─── Graveyard ──────────────────────────────────────────────*/
+    .graveyard {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .graveyard-header {
+      background: #080808;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .graveyard-header span {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #ff5555;
+      margin-left: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+
+    .graveyard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .graveyard-table thead tr { border-bottom: 1px solid var(--border); }
+    .graveyard-table thead th {
+      padding: 0.75rem 1.25rem;
+      text-align: left;
+      color: #444;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.68rem;
+    }
+
+    .graveyard-table tbody tr {
+      border-bottom: 1px solid #151515;
+      transition: background 0.15s;
+    }
+    .graveyard-table tbody tr:last-child { border-bottom: none; }
+    .graveyard-table tbody tr:hover { background: #111; }
+    .graveyard-table tbody td { padding: 0.85rem 1.25rem; color: #666; }
+
+    .g-domain { color: #aaa; font-weight: 600; }
+    .g-status  { color: #ff5555; font-weight: 700; }
+
+    .graveyard-note {
+      padding: 0.85rem 1.25rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #333;
+      font-style: italic;
+    }
+
+    /* ─── Try to take this down ───────────────────────────────────*/
+    .takedown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .takedown-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.75rem;
+    }
+
+    .takedown-card.works {
+      border-color: #ff5555;
+      background: rgba(255,85,85,0.04);
+    }
+
+    .takedown-card.fails {
+      border-color: #333;
+    }
+
+    .takedown-card .td-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .takedown-card.works .td-label { color: #ff5555; }
+    .takedown-card.fails .td-label { color: var(--green); }
+
+    .takedown-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .takedown-list li {
+      font-size: 0.875rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .takedown-card.works .takedown-list li { color: #888; }
+    .takedown-card.works .takedown-list li::before { content: '✓'; color: #ff5555; flex-shrink: 0; font-family: var(--font-mono); }
+
+    .takedown-card.fails .takedown-list li { color: #888; }
+    .takedown-card.fails .takedown-list li::before { content: '✗'; color: var(--green); flex-shrink: 0; font-family: var(--font-mono); }
+
+    /* ─── IPFS section ───────────────────────────────────────────*/
+    .ipfs-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .ipfs-text p { margin-bottom: 1rem; font-size: 0.95rem; color: #999; }
+
+    .verdict-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 0 8px 8px 0;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--green);
+    }
+
+    .timeline { display: flex; flex-direction: column; }
+
+    .timeline-item {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child { border-bottom: none; }
+
+    .tl-year {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--green);
+      min-width: 3rem;
+      padding-top: 0.15rem;
+    }
+
+    .tl-content h4 { font-size: 0.875rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .tl-content p  { font-size: 0.78rem; color: #666; }
+
+    /* ─── PKDNS section ──────────────────────────────────────────*/
+    .pkdns-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3rem;
+      margin-bottom: 4rem;
+      text-align: left;
+    }
+
+    .pkdns-cols p { margin-bottom: 0.9rem; font-size: 0.95rem; color: #999; }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      font-size: 0.875rem;
+      color: #ccc;
+    }
+
+    .feature-list li::before {
+      content: '→';
+      color: var(--green);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    /* Comparison table */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .table-header {
+      background: #0a0a0a;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .table-header span {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-left: 0.4rem;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green  { background: #28c840; }
+
+    table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.78rem; }
+
+    thead tr { border-bottom: 1px solid var(--border); }
+    thead th {
+      padding: 0.8rem 1.25rem;
+      text-align: left;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.68rem;
+    }
+    thead th:last-child { color: var(--green); }
+
+    tbody tr { border-bottom: 1px solid #181818; transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #151515; }
+
+    tbody td { padding: 0.8rem 1.25rem; color: #bbb; }
+    tbody td:first-child { color: #666; }
+    tbody td:last-child  { color: var(--green); font-weight: 700; }
+
+    .yes { color: #66cc66; }
+    .no  { color: #cc4444; }
+    .partial { color: #ccaa44; }
+
+    /* ─── Setup section ──────────────────────────────────────────*/
+    .setup-tabs {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      margin: 0 auto 2.5rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      padding: 1.4rem 2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-weight: 600;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active {
+      background: var(--green);
+      color: var(--black);
+      font-weight: 800;
+      border-color: var(--green);
+    }
+    .tab-btn:not(.active):hover { color: var(--white); border-color: #444; background: #181818; }
+
+    .tab-panel { display: none; text-align: left; }
+    .tab-panel.active { display: block; }
+
+    .steps { display: flex; flex-direction: column; gap: 2rem; }
+
+    .step { display: grid; grid-template-columns: 2.5rem 1fr; gap: 1.5rem; }
+
+    .step-num {
+      width: 2.5rem; height: 2.5rem;
+      border-radius: 50%;
+      border: 1px solid var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    .step-content h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .step-content p  { font-size: 0.875rem; color: #777; margin-bottom: 0.75rem; }
+
+    /* Code blocks */
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 0.75rem;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: #080808;
+    }
+
+    .code-block-header span {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { color: var(--white); border-color: var(--muted); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    pre {
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.75;
+      color: #e0e0e0;
+    }
+
+    pre .comment { color: #444; }
+    pre .cmd     { color: var(--green); }
+    pre .flag    { color: #88aaff; }
+    pre .val     { color: #ffcc88; }
+    pre .str     { color: #aaddaa; }
+
+    .note {
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      color: #555;
+      font-family: var(--font-mono);
+    }
+
+    /* ─── Unlocked section ───────────────────────────────────────*/
+    .unlocked-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .unlock-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.75rem;
+      transition: border-color 0.2s;
+    }
+    .unlock-card:hover { border-color: #333; }
+
+    .unlock-icon {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      color: var(--green);
+      margin-bottom: 0.75rem;
+    }
+
+    .unlock-card h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .unlock-card p  { font-size: 0.84rem; color: #666; }
+
+    /* ─── Links section ──────────────────────────────────────────*/
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .link-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, background 0.2s;
+      display: block;
+      text-decoration: none;
+    }
+    .link-card:hover { border-color: var(--green); background: #111; text-decoration: none; }
+    .link-card .link-icon { font-family: var(--font-mono); font-size: 1.25rem; margin-bottom: 0.75rem; }
+    .link-card h3 { font-size: 0.875rem; color: var(--white); margin-bottom: 0.25rem; }
+    .link-card p  { font-size: 0.78rem; color: var(--muted); }
+
+    /* ─── Footer ─────────────────────────────────────────────────*/
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #333;
+    }
+    footer span { color: var(--green); }
+
+    /* ─── Responsive ─────────────────────────────────────────────*/
+    @media (max-width: 860px) {
+      .problem-grid  { grid-template-columns: 1fr; }
+      .ipfs-layout   { grid-template-columns: 1fr; }
+      .pkdns-cols    { grid-template-columns: 1fr; }
+      .unlocked-grid { grid-template-columns: 1fr; }
+      .links-grid    { grid-template-columns: repeat(2, 1fr); }
+      nav .nav-links { display: none; }
+      #globe-canvas  { width: 320px; height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Nav ──────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">NO_REGISTRY</div>
+  <ul class="nav-links">
+    <li><a href="#problem">The Problem</a></li>
+    <li><a href="#ipfs">Why IPFS Failed</a></li>
+    <li><a href="#pkdns">PKDNS</a></li>
+    <li><a href="#setup">Setup Guide</a></li>
+    <li><a href="#takedown">Try to take this down</a></li>
+    <li><a href="https://github.com/pubky" target="_blank">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- ─── Hero ─────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-text">
+    <h1>No<span>Registry.</span></h1>
+    <p class="hero-sub">An address tied to your key. No registrar. No authority. Nothing to seize.</p>
+    <p class="hero-body">PKDNS is a naming system where your address is derived from a cryptographic key. There is no registry to contact, no domain to register, and no authority that can take it down. It runs over the same distributed network that BitTorrent has operated reliably for over 20 years.</p>
+    <div class="btn-row">
+      <a href="#setup" class="btn btn-primary">Try it now →</a>
+      <a href="#pkdns" class="btn btn-outline">Learn more</a>
+    </div>
+
+    <div class="domain-callout">
+      <span class="domain-line">This page lives on <span class="domain-reg">noregistry.com</span> — a domain we <span class="domain-bad">paid $15</span> to register with <span class="domain-bad">a company that can take it away.</span> The PKDNS address below cannot be seized by anyone. <span class="domain-ever">Ever.</span></span>
+      <a class="domain-pkarr" href="#" title="PKDNS address — no registrar required"><!-- REPLACE WITH REAL PKARR ADDRESS -->pk:7fmjpcuuzf54hw18bsgi3zihzyh4awseeuq5tmojefaezjbd64cy</a>
+    </div>
+
+    <div class="stat-bar">
+      <div class="stat-item">
+        <div class="stat-num">25M+</div>
+        <div class="stat-label">DHT Nodes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">20yr</div>
+        <div class="stat-label">Network uptime</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Registrars</div>
+      </div>
+    </div>
+
+    <div class="globe-wrap">
+      <canvas id="globe-canvas" width="480" height="480"></canvas>
+      <div class="globe-label">Illustrative — PKDNS is anonymous by design. No nodes are tracked.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Problem ───────────────────────────────────────────────────── -->
+<section id="problem">
+  <div class="container">
+    <div class="section-head">
+      <h2>DNS is a <span class="green">kill switch.</span></h2>
+      <p>Every domain name on the internet has an owner who can be pressured. A registrar who can be seized. A government who can issue a takedown. The kill switch still exists — it is just held by a different hand.</p>
+    </div>
+
+    <div class="graveyard">
+      <div class="graveyard-header">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span>SEIZED_DOMAINS.LOG</span>
+      </div>
+      <table class="graveyard-table">
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>What it was</th>
+            <th>Seized by</th>
+            <th>Year</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="g-domain">sci-hub.org</td>
+            <td>Academic paper repository</td>
+            <td>US & UK court orders</td>
+            <td>2021</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+          <tr>
+            <td class="g-domain">libgen.org</td>
+            <td>Book & paper library</td>
+            <td>US court order</td>
+            <td>2015</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+          <tr>
+            <td class="g-domain">z-lib.org</td>
+            <td>Book library</td>
+            <td>US Dept. of Justice</td>
+            <td>2022</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+          <tr>
+            <td class="g-domain">tornadocash.eth</td>
+            <td>Privacy protocol frontend</td>
+            <td>OFAC sanctions</td>
+            <td>2022</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+          <tr>
+            <td class="g-domain">kat.cr</td>
+            <td>Torrent index</td>
+            <td>US Dept. of Justice</td>
+            <td>2016</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+          <tr>
+            <td class="g-domain">megaupload.com</td>
+            <td>File sharing platform</td>
+            <td>FBI / DOJ</td>
+            <td>2012</td>
+            <td class="g-status">&#9760; Seized</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="graveyard-note">These domains no longer belong to the people who built them.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── IPFS ───────────────────────────────────────────────────────── -->
+<section id="ipfs">
+  <div class="container">
+    <div class="section-head">
+      <h2>IPFS tried to solve this. <span class="green">It didn't.</span></h2>
+    </div>
+  </div>
+  <div class="container-wide">
+    <div class="ipfs-layout">
+      <div class="ipfs-text">
+        <p>In 2015, Protocol Labs launched IPFS with the right idea: address content by what it is, not where it is. Brave, Opera, and Cloudflare all shipped IPFS support. Protocol Labs raised hundreds of millions.</p>
+        <p>But IPFS built its own DHT from scratch — and that DHT never matched the scale or reliability of the Mainline DHT BitTorrent already operated. Content was frequently unavailable. Resolution was slow. The naming problem was never solved.</p>
+        <p>Most IPFS access today goes through Cloudflare's gateway. The decentralised web, routed through a centralised company. Again.</p>
+        <div class="verdict-box">"The vision was right. The infrastructure was wrong."</div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="tl-year">2005</div>
+          <div class="tl-content">
+            <h4>Mainline DHT launches</h4>
+            <p>BitTorrent's distributed hash table goes live. Designed for scale from day one.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-year">2015</div>
+          <div class="tl-content">
+            <h4>IPFS launches</h4>
+            <p>New DHT, new network, new protocol. Builds in isolation from existing infrastructure.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-year">2018</div>
+          <div class="tl-content">
+            <h4>Cloudflare IPFS gateway</h4>
+            <p>Cloudflare steps in to make IPFS usable. Centralisation creeps back in.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-year">2022</div>
+          <div class="tl-content">
+            <h4>Tornado Cash precedent</h4>
+            <p>IPFS gateways remove content under legal pressure. The failure point is confirmed.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-year">2025</div>
+          <div class="tl-content">
+            <h4>Mainline DHT: still running</h4>
+            <p>25M+ nodes. No company. No authority. No seizable domain. Still works.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PKDNS ──────────────────────────────────────────────────────── -->
+<section id="pkdns">
+  <div class="container">
+    <div class="section-head">
+      <h2>What actually <span class="green">works.</span></h2>
+    </div>
+  </div>
+  <div class="container-wide">
+    <div class="pkdns-cols">
+      <div>
+        <p>PKDNS addresses are derived from your public key — not a registrar, not a company. Records are published directly to Mainline DHT, the same network BitTorrent has run on since 2005: 25 million nodes, no single operator, nothing to seize.</p>
+        <p>No registration. No renewal. No permission required. Written in Rust, runs on a Raspberry Pi, drops in alongside Pi-hole in under 10 minutes.</p>
+      </div>
+      <ul class="feature-list">
+        <li>Address is your public key — mathematically impossible to seize</li>
+        <li>Records published to Mainline DHT — 25M+ nodes, no single operator</li>
+        <li>No new network to trust — built on 20 years of proven infrastructure</li>
+        <li>Zero registration — no account, no fee, no renewal</li>
+        <li>No permission required to publish or resolve</li>
+        <li>Lightweight Rust binary — runs on a Pi, in Docker, or natively</li>
+        <li>Drop-in resolver — works alongside Pi-hole and AdGuard Home</li>
+      </ul>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span>COMPARISON_TABLE</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Traditional DNS</th>
+            <th>IPFS</th>
+            <th>PKDNS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Address tied to</td>
+            <td>Domain registrar</td>
+            <td>Content hash</td>
+            <td class="green">Public key</td>
+          </tr>
+          <tr>
+            <td>Can be seized</td>
+            <td class="no">Yes</td>
+            <td class="partial">Gateway can be</td>
+            <td class="yes green">No</td>
+          </tr>
+          <tr>
+            <td>Infrastructure</td>
+            <td>Centralised</td>
+            <td>Custom DHT (fragile)</td>
+            <td class="green">Mainline DHT (25M+ nodes)</td>
+          </tr>
+          <tr>
+            <td>Reliable in practice</td>
+            <td class="yes">Yes</td>
+            <td class="no">Often not</td>
+            <td class="yes green">Yes</td>
+          </tr>
+          <tr>
+            <td>Zero config to use</td>
+            <td class="yes">Yes</td>
+            <td class="no">No</td>
+            <td class="yes green">Yes</td>
+          </tr>
+          <tr>
+            <td>Running since</td>
+            <td>1985</td>
+            <td>2015</td>
+            <td class="green">Built on DHT from 2005</td>
+          </tr>
+          <tr>
+            <td>Central authority</td>
+            <td class="no">ICANN / Registrars</td>
+            <td class="partial">Protocol Labs / Gateways</td>
+            <td class="yes green">None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Setup ─────────────────────────────────────────────────────── -->
+<section id="setup">
+  <div class="container">
+    <div class="section-head">
+      <h2>Run your own. <span class="green">In 10 minutes (or less).</span></h2>
+      <p>Two paths. Pick the one that matches your setup.</p>
+    </div>
+
+    <div class="setup-tabs">
+      <button class="tab-btn active" onclick="switchTab('pihole', this)">
+        Pi-hole + PKDNS
+        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">Whole network · recommended</div>
+      </button>
+      <button class="tab-btn" onclick="switchTab('docker', this)">
+        Docker only
+        <div style="font-size:0.72rem;font-weight:500;margin-top:0.35rem;opacity:0.7;">Single machine · no Pi-hole needed</div>
+      </button>
+    </div>
+
+    <!-- Tab: Pi-hole -->
+    <div id="tab-pihole" class="tab-panel active">
+      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">Prerequisites: Pi-hole already running · Docker installed on the same machine</p>
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Pull the PKDNS Docker image</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">docker pull</span> <span class="val">synonymsoft/pkdns</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Run the PKDNS container</h4>
+            <p>Bind to port 5335 so it does not conflict with Pi-hole's own port 53. The <code style="font-family:var(--font-mono);color:var(--green);font-size:0.82rem;">-f</code> flag sets the ICANN fallback for regular domains.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">docker run</span> <span class="flag">-d</span> \
+  <span class="flag">--name</span> pkdns \
+  <span class="flag">--restart</span> unless-stopped \
+  <span class="flag">-p</span> <span class="val">127.0.0.1:5335:53/udp</span> \
+  <span class="flag">-p</span> <span class="val">127.0.0.1:5335:53/tcp</span> \
+  <span class="val">synonymsoft/pkdns</span> \
+  <span class="flag">-f</span> <span class="val">8.8.8.8:53</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Point Pi-hole's upstream DNS to PKDNS</h4>
+            <p>In Pi-hole admin: <strong>Settings → DNS</strong>. Uncheck all existing upstream servers and add a custom IPv4 upstream:</p>
+            <div class="code-block">
+              <div class="code-block-header"><span>upstream address</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre>127.0.0.1#5335</pre>
+            </div>
+            <p style="margin-top:0.5rem;">Save and apply. Pi-hole will now forward queries through your local PKDNS resolver.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h4>Test resolution</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="comment"># Resolve a known PKARR address</span>
+<span class="cmd">nslookup</span> <span class="val">7fmjpcuuzf54hw18bsgi3zihzyh4awseeuq5tmojefaezjbd64cy</span> <span class="str">127.0.0.1</span>
+
+<span class="comment"># Confirm regular domains still resolve (ICANN fallback)</span>
+<span class="cmd">nslookup</span> <span class="val">example.com</span> <span class="str">127.0.0.1</span>
+
+<span class="comment"># Check the container is running</span>
+<span class="cmd">docker ps</span> <span class="flag">--filter</span> <span class="val">name=pkdns</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">05</div>
+          <div class="step-content">
+            <h4>You're done</h4>
+            <p>Every device on your network that uses Pi-hole as its DNS now resolves PKDNS addresses — with no registrar in the path, no authority to pressure, and no single point to seize.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Docker only -->
+    <div id="tab-docker" class="tab-panel">
+      <p style="margin-bottom:2rem;font-size:0.85rem;color:#666;font-family:var(--font-mono);">No Pi-hole required. Run PKDNS as a standalone resolver on any machine with Docker.</p>
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Pull and run</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">docker run</span> <span class="flag">-d</span> \
+  <span class="flag">--name</span> pkdns \
+  <span class="flag">--restart</span> unless-stopped \
+  <span class="flag">-p</span> <span class="val">53:53/udp</span> \
+  <span class="flag">-p</span> <span class="val">53:53/tcp</span> \
+  <span class="val">synonymsoft/pkdns</span> \
+  <span class="flag">-f</span> <span class="val">8.8.8.8:53</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Point your system DNS to localhost</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>/etc/resolv.conf</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre>nameserver 127.0.0.1</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Test it</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+              <pre><span class="cmd">nslookup</span> <span class="val">7fmjpcuuzf54hw18bsgi3zihzyh4awseeuq5tmojefaezjbd64cy</span> <span class="str">127.0.0.1</span></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Unlocked ───────────────────────────────────────────────────── -->
+<section id="unlocked">
+  <div class="container-wide">
+    <div class="section-head">
+      <h2>What gets <span class="green">unlocked.</span></h2>
+      <p>Once your resolver is running, here is what becomes possible.</p>
+    </div>
+
+    <div class="unlocked-grid">
+      <div class="unlock-card">
+        <div class="unlock-icon">[KEY]</div>
+        <h3>Addresses no registrar can seize</h3>
+        <p>Resolve names tied to cryptographic keys. No ICANN. No court order applies. No registrar to pressure.</p>
+      </div>
+      <div class="unlock-card">
+        <div class="unlock-icon">[NET]</div>
+        <h3>Access Pubky homeservers</h3>
+        <p>Reach Pubky applications and homeservers via their public key address. No gateway required.</p>
+      </div>
+      <div class="unlock-card">
+        <div class="unlock-icon">[DHT]</div>
+        <h3>Strengthen the network</h3>
+        <p>Every resolver you run is another node participating in the DHT. More installs means a more resilient network for everyone.</p>
+      </div>
+      <div class="unlock-card">
+        <div class="unlock-icon">[DEV]</div>
+        <h3>Build on it</h3>
+        <p>Build applications where the endpoint is the key — payments, identity, services. No registrar in the dependency chain.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Try to take this down ────────────────────────────────────── -->
+<section id="takedown">
+  <div class="container">
+    <div class="section-head">
+      <h2>Try to <span class="green">take this down.</span></h2>
+      <p>Here is the standard playbook for removing a website. Here is why none of it works on a PKDNS address.</p>
+    </div>
+
+    <div class="takedown-grid">
+      <div class="takedown-card works">
+        <div class="td-label">Works on traditional DNS</div>
+        <ul class="takedown-list">
+          <li>Contact the domain registrar and file a complaint</li>
+          <li>Obtain a court order forcing the registrar to suspend the domain</li>
+          <li>File a DMCA takedown with the hosting provider</li>
+          <li>Issue OFAC sanctions — pressure registrar and host to comply</li>
+          <li>Contact the CDN (Cloudflare) and request removal from their network</li>
+        </ul>
+      </div>
+      <div class="takedown-card fails">
+        <div class="td-label">Doesn't work on PKDNS</div>
+        <ul class="takedown-list">
+          <li>No registrar exists — the address is derived from a cryptographic key</li>
+          <li>No court can compel a registrar that does not exist</li>
+          <li>No hosting provider controls the record — it lives in the DHT</li>
+          <li>No company to sanction — the network has no owner or operator</li>
+          <li>No CDN middleman — records are resolved peer-to-peer across 25M+ nodes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Links ─────────────────────────────────────────────────────── -->
+<section id="links">
+  <div class="container-wide">
+    <div class="section-head">
+      <h2>Go <span class="green">deeper.</span></h2>
+    </div>
+
+    <div class="links-grid">
+      <a class="link-card" href="https://pubky.app" target="_blank">
+        <div class="link-icon">[APP]</div>
+        <h3>Pubky App</h3>
+        <p>See PKDNS in action. A real application where every address is a public key — no registrar, no authority.</p>
+      </a>
+      <a class="link-card" href="https://github.com/pubky" target="_blank">
+        <div class="link-icon">[GH]</div>
+        <h3>Pubky GitHub</h3>
+        <p>Source code, issues, and development. Start here.</p>
+      </a>
+      <a class="link-card" href="https://github.com/pubky/pkarr" target="_blank">
+        <div class="link-icon">[SPEC]</div>
+        <h3>PKARR Specification</h3>
+        <p>The protocol spec for Public Key Addressable Resource Records.</p>
+      </a>
+      <a class="link-card" href="https://github.com/pubky/pubky-core" target="_blank">
+        <div class="link-icon">[CORE]</div>
+        <h3>Pubky Core</h3>
+        <p>The core Rust library that powers PKDNS and the Pubky ecosystem.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ────────────────────────────────────────────────────── -->
+<footer>
+  <p>No registry. No authority. No permission required.</p>
+</footer>
+
+<!-- ─── Scripts ───────────────────────────────────────────────────── -->
+<script>
+  /* ── Tab switcher ─────────────────────────────────────────────── */
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  /* ── Copy buttons ─────────────────────────────────────────────── */
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'copied — now you own this.';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2500);
+    });
+  }
+
+  /* ── Globe animation ──────────────────────────────────────────── */
+  (function () {
+    const canvas = document.getElementById('globe-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const GREEN = '#CCFF00';
+
+    const NODE_COUNT = 22;
+    const RADIUS = 185;
+    let nodes = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      const angle = (i / NODE_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.45;
+      const r = RADIUS * (0.55 + Math.random() * 0.5);
+      nodes.push({
+        x: cx + Math.cos(angle) * r,
+        y: cy + Math.sin(angle) * r,
+        pulse: Math.random() * Math.PI * 2,
+        size: 2 + Math.random() * 2.5,
+      });
+    }
+
+    const userNode = { x: cx, y: cy + 8 };
+    let tick = 0;
+    const CYCLE = 240;
+
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const phase = (tick % CYCLE) / CYCLE;
+
+      // subtle grid
+      ctx.strokeStyle = 'rgba(204,255,0,0.03)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 44) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 44) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+      // dim resting connections
+      nodes.forEach(n => {
+        ctx.beginPath();
+        ctx.moveTo(userNode.x, userNode.y);
+        ctx.lineTo(n.x, n.y);
+        ctx.strokeStyle = 'rgba(204,255,0,0.04)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // query fan-out (0 → 0.5)
+      if (phase < 0.5) {
+        const p = ease(phase / 0.5);
+        nodes.forEach((n, i) => {
+          if (i % 3 !== 0) return;
+          const ex = userNode.x + (n.x - userNode.x) * p;
+          const ey = userNode.y + (n.y - userNode.y) * p;
+          ctx.beginPath(); ctx.moveTo(userNode.x, userNode.y); ctx.lineTo(ex, ey);
+          ctx.strokeStyle = `rgba(204,255,0,${0.55 * (1 - p*0.3)})`;
+          ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI*2);
+          ctx.fillStyle = GREEN; ctx.fill();
+        });
+      }
+
+      // resolution return (0.5 → 0.85)
+      if (phase >= 0.5 && phase < 0.85) {
+        const p = ease((phase - 0.5) / 0.35);
+        const resolver = nodes[6];
+        const ex = resolver.x + (userNode.x - resolver.x) * p;
+        const ey = resolver.y + (userNode.y - resolver.y) * p;
+        ctx.beginPath(); ctx.moveTo(resolver.x, resolver.y); ctx.lineTo(ex, ey);
+        ctx.strokeStyle = 'rgba(204,255,0,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI*2);
+        ctx.fillStyle = GREEN; ctx.fill();
+      }
+
+      // resolved pulse (0.85 → 1.0)
+      if (phase >= 0.85) {
+        const p = (phase - 0.85) / 0.15;
+        ctx.beginPath(); ctx.arc(userNode.x, userNode.y, p * 32, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(204,255,0,${0.8*(1-p)})`; ctx.lineWidth = 2; ctx.stroke();
+      }
+
+      // nodes
+      nodes.forEach((n, i) => {
+        n.pulse += 0.03;
+        const g = 0.35 + 0.3 * Math.sin(n.pulse);
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.size, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(204,255,0,${g})`; ctx.fill();
+        if (i % 5 === 0) {
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.size + 4, 0, Math.PI*2);
+          ctx.strokeStyle = `rgba(204,255,0,${g*0.25})`; ctx.lineWidth = 1; ctx.stroke();
+        }
+      });
+
+      // user node
+      ctx.beginPath(); ctx.arc(userNode.x, userNode.y, 7, 0, Math.PI*2);
+      ctx.fillStyle = GREEN; ctx.fill();
+      ctx.beginPath(); ctx.arc(userNode.x, userNode.y, 13, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(204,255,0,0.25)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillStyle = 'rgba(204,255,0,0.6)';
+      ctx.fillText('YOU', userNode.x - 12, userNode.y + 26);
+      ctx.fillStyle = 'rgba(204,255,0,0.4)';
+      ctx.fillText('DHT NODE', nodes[6].x - 30, nodes[6].y - 12);
+
+      tick++;
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  })();
+</script>
+
+</body>
+</html>
