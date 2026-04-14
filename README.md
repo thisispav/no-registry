@@ -10,11 +10,16 @@ No registrar. No authority. No permission required.
 
 ## Structure
 
+Monorepo (`bun` workspaces):
+
 ```
-web/    Landing page (deployed on Vercel)
-cli/    One-command setup tool (coming soon)
+packages/
+  app/  Landing page — original single-file `index.html` (deploy on Vercel with root `packages/app`)
+  cli/  pkdns CLI (`pkdns-cli` package — one-command PKDNS setup)
 ```
 
 ## Running locally
 
-Open `web/index.html` in any browser — no build step required.
+**Site:** open `packages/app/index.html` in a browser, or from the repo root run `bun run dev:app` (Vite dev server, no React — same markup/CSS as shipped).
+
+**CLI:** from the repo root, `bun install` then `bun run dev:cli`, or `cd packages/cli && bun run dev`.

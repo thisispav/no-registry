@@ -1,0 +1,7 @@
+node_modules/
+dist/
+pkdns-cli
+pkdns-cli.exe
+coverage/
+*.log
+.DS_Store
