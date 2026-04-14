@@ -3,6 +3,7 @@ import { log } from '@clack/prompts';
 import { isBinaryInstalled, downloadBinary, getInstalledVersion } from '../lib/binary.js';
 import { getLatestRelease } from '../lib/github.js';
 import { configExists } from '../lib/config.js';
+import { addBinToPath } from '../lib/shell.js';
 
 export function registerInstall(program: Command): void {
   program
@@ -28,6 +29,11 @@ export function registerInstall(program: Command): void {
         process.stdout.write(`Downloading pkdns ${tag}…\n`);
         await downloadBinary(options.version);
         log.success(`pkdns ${tag} installed`);
+
+        const { rcFile, added } = await addBinToPath();
+        if (added) {
+          log.info(`Added pkdns to PATH in ${rcFile} — run: source ${rcFile}`);
+        }
 
         if (!(await configExists())) {
           log.info('No config found. Run `pkdns init` to set up pkdns.');
