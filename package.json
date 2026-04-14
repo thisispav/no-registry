@@ -1,0 +1,13 @@
+{
+  "name": "no-registry",
+  "private": true,
+  "description": "No Registry — PKDNS site and tooling",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "bun run --filter pkdns-cli build",
+    "dev:app": "bun run --filter @noregistry/app dev",
+    "dev:cli": "bun run --filter pkdns-cli dev",
+    "test:cli": "bun run --filter pkdns-cli test",
+    "typecheck:cli": "bun run --filter pkdns-cli typecheck"
+  }
+}
