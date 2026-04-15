@@ -4,6 +4,7 @@ import pkg from '../package.json';
 import { checkForCliUpdate } from './lib/update-check.js';
 import { registerInstall } from './commands/install.js';
 import { registerUpgrade } from './commands/upgrade.js';
+import { registerUpdateCli } from './commands/update-cli.js';
 import { registerInit } from './commands/init.js';
 import { registerConfig } from './commands/config.js';
 import { registerStart } from './commands/start.js';
@@ -26,6 +27,7 @@ program
 
 registerInstall(program);
 registerUpgrade(program);
+registerUpdateCli(program);
 registerInit(program);
 registerConfig(program);
 registerStart(program);
@@ -37,7 +39,7 @@ registerResolve(program);
 registerTest(program);
 registerVersion(program);
 
-const skipUpdateCommands = new Set(['help', 'version']);
+const skipUpdateCommands = new Set(['help', 'version', 'update-cli']);
 const firstArg = process.argv[2];
 const shouldCheckUpdate =
   firstArg != null &&

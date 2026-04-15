@@ -53,6 +53,9 @@ export async function navigableText(opts: {
   defaultValue?: string;
   validate?: (value: string | undefined) => string | undefined;
 }): Promise<string> {
-  const value = await text(opts);
+  const value = await text({
+    ...opts,
+    defaultValue: opts.defaultValue ?? opts.placeholder,
+  });
   return guardCancel(value);
 }

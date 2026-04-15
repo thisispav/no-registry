@@ -5,3 +5,6 @@ coverage/
 bun.lock
 bun.lockb
 install.sh
+dist/pkdns-*
+dist/release/
+dist/staging/

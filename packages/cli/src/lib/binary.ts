@@ -124,26 +124,24 @@ export async function downloadBinary(version?: string): Promise<void> {
     }
 
     await fs.promises.mkdir(BIN_DIR, { recursive: true });
-    await extractTarball(tmpTar, BIN_DIR);
 
-    const binaryName = process.platform === 'win32' ? 'pkdns.exe' : 'pkdns';
-    const extractedBinary = await findBinaryInDir(BIN_DIR, binaryName);
-    if (!extractedBinary) {
-      throw new Error(`Could not find "${binaryName}" binary after extraction in ${BIN_DIR}`);
-    }
+    // Extract into a temporary subdirectory so we never accidentally match
+    // the pkdns-cli binary that lives alongside the daemon in BIN_DIR.
+    const extractDir = path.join(BIN_DIR, `.extract-${Date.now()}`);
+    await fs.promises.mkdir(extractDir, { recursive: true });
+    try {
+      await extractTarball(tmpTar, extractDir);
 
-    if (extractedBinary !== BINARY_PATH) {
-      await fs.promises.rename(extractedBinary, BINARY_PATH);
-    }
-
-    await fs.promises.chmod(BINARY_PATH, 0o755);
-
-    // Clean up any leftover extracted subdirectories
-    const entries = await fs.promises.readdir(BIN_DIR, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        await fs.promises.rm(path.join(BIN_DIR, entry.name), { recursive: true, force: true });
+      const binaryName = process.platform === 'win32' ? 'pkdns.exe' : 'pkdns';
+      const extractedBinary = await findBinaryInDir(extractDir, binaryName);
+      if (!extractedBinary) {
+        throw new Error(`Could not find "${binaryName}" binary after extraction`);
       }
+
+      await fs.promises.rename(extractedBinary, BINARY_PATH);
+      await fs.promises.chmod(BINARY_PATH, 0o755);
+    } finally {
+      await fs.promises.rm(extractDir, { recursive: true, force: true });
     }
 
     const meta: InstalledVersion = {

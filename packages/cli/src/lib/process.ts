@@ -94,13 +94,27 @@ export async function startDaemon(options: StartOptions = {}): Promise<number> {
     stdio: ['ignore', logFd, logFd],
   });
 
-  child.unref();
   fs.closeSync(logFd);
 
   if (child.pid === undefined) {
     throw new Error('Failed to start pkdns: no PID returned');
   }
 
+  // Wait briefly then verify the process is still alive — catches immediate crashes.
+  await new Promise((r) => setTimeout(r, 600));
+
+  if (!isProcessAlive(child.pid)) {
+    // Tail the log for context
+    let hint = '';
+    try {
+      const log = await fs.promises.readFile(LOG_FILE, 'utf-8');
+      const tail = log.trim().split('\n').slice(-5).join('\n');
+      if (tail) hint = `\n\nLog output:\n${tail}`;
+    } catch { /* log may not exist */ }
+    throw new Error(`pkdns exited immediately after starting.${hint}`);
+  }
+
+  child.unref();
   await writePid(child.pid);
   await writeMeta({ startTime: new Date().toISOString() });
 

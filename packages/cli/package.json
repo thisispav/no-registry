@@ -1,13 +1,13 @@
 {
   "name": "pkdns-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Manage pkdns — self-sovereign DNS on Mainline DHT",
   "type": "module",
   "bin": {
     "pkdns": "./dist/index.js"
   },
   "files": [
-    "dist/",
+    "dist/index.js",
     "README.md"
   ],
   "engines": {

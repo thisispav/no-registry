@@ -3,7 +3,7 @@ import path from 'path';
 
 export const PKDNS_DIR = process.env.PKDNS_DIR ?? path.join(os.homedir(), '.pkdns');
 export const BIN_DIR = path.join(PKDNS_DIR, 'bin');
-export const BINARY_PATH = path.join(BIN_DIR, process.platform === 'win32' ? 'pkdns.exe' : 'pkdns');
+export const BINARY_PATH = path.join(BIN_DIR, process.platform === 'win32' ? 'pkdns-daemon.exe' : 'pkdns-daemon');
 export const CONFIG_PATH = path.join(PKDNS_DIR, 'pkdns.toml');
 export const COMPOSE_PATH = path.join(PKDNS_DIR, 'compose.yaml');
 export const PID_FILE = path.join(PKDNS_DIR, 'pkdns.pid');

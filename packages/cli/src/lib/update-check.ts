@@ -11,7 +11,7 @@ interface UpdateCache {
   latestVersion: string;
 }
 
-function isNewerVersion(current: string, latest: string): boolean {
+export function isNewerVersion(current: string, latest: string): boolean {
   const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
   const cur = parse(current);
   const lat = parse(latest);
@@ -36,7 +36,7 @@ async function getCachedLatest(): Promise<string | null> {
   return null;
 }
 
-async function fetchLatestVersion(): Promise<string> {
+export async function fetchLatestVersion(): Promise<string> {
   const res = await fetch(REGISTRY_URL, {
     headers: { 'User-Agent': 'pkdns-cli' },
     signal: AbortSignal.timeout(3000),
