@@ -104,14 +104,40 @@ export async function startDaemon(options: StartOptions = {}): Promise<number> {
   await new Promise((r) => setTimeout(r, 600));
 
   if (!isProcessAlive(child.pid)) {
-    // Tail the log for context
-    let hint = '';
+    let tail = '';
     try {
-      const log = await fs.promises.readFile(LOG_FILE, 'utf-8');
-      const tail = log.trim().split('\n').slice(-5).join('\n');
-      if (tail) hint = `\n\nLog output:\n${tail}`;
+      const raw = await fs.promises.readFile(LOG_FILE, 'utf-8');
+      tail = raw.trim().split('\n').slice(-5).join('\n');
     } catch { /* log may not exist */ }
-    throw new Error(`pkdns exited immediately after starting.${hint}`);
+
+    let message = 'pkdns exited immediately after starting.';
+
+    if (tail.includes('AddrInUse') || tail.includes('Address in use')) {
+      message =
+        'pkdns could not bind to its port — another process is already using it.\n\n' +
+        'On Linux, systemd-resolved often holds port 53. Fix options:\n\n' +
+        '  1. Use a different port:\n' +
+        '       pkdns config set general.socket 0.0.0.0:5335\n' +
+        '       pkdns start\n\n' +
+        '  2. Free port 53 (disable systemd-resolved stub):\n' +
+        '       sudo systemctl stop systemd-resolved\n' +
+        '       sudo systemctl disable systemd-resolved\n' +
+        '       pkdns start\n\n' +
+        '  Check what is using the port:\n' +
+        '       ss -tlunp | grep :53';
+    } else if (tail.includes('Permission denied') || tail.includes('EACCES') || tail.includes('code: 13')) {
+      message =
+        'pkdns lacks permission to bind to its port.\n\n' +
+        'Ports below 1024 require root on Linux. Options:\n\n' +
+        '  1. Run with sudo:\n' +
+        '       sudo pkdns start\n\n' +
+        '  2. Use a port above 1024:\n' +
+        '       pkdns config set general.socket 0.0.0.0:5335\n' +
+        '       pkdns start';
+    }
+
+    if (tail) message += `\n\nLog output:\n${tail}`;
+    throw new Error(message);
   }
 
   child.unref();
