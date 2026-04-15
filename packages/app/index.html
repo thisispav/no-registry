@@ -782,6 +782,7 @@
     <li><a href="#problem">The Problem</a></li>
     <li><a href="#ipfs">Why IPFS Failed</a></li>
     <li><a href="#pkdns">PKDNS</a></li>
+    <li><a href="#try">Try it now</a></li>
     <li><a href="#setup">Setup Guide</a></li>
     <li><a href="#takedown">Try to take this down</a></li>
     <li><a href="https://github.com/pubky" target="_blank">GitHub</a></li>
@@ -1043,6 +1044,38 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Try it now ──────────────────────────────────────────────── -->
+<section id="try">
+  <div class="container">
+    <div class="section-head">
+      <h2>Try it. <span class="green">Right now.</span></h2>
+      <p>No install needed. Point your DNS to our public resolver and resolve a PKDNS address in 30 seconds.</p>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2.5rem;text-align:left;margin-bottom:1.5rem;">
+      <p style="color:var(--green);font-family:var(--font-mono);font-size:0.8rem;font-weight:700;letter-spacing:0.08em;margin-bottom:1.2rem;">STEP 1 — SET YOUR DNS</p>
+      <p style="margin-bottom:1rem;">Point your device or router's DNS to our public resolver:</p>
+      <div class="code-block" style="margin-bottom:1.5rem;">
+        <div class="code-block-header"><span>DNS server</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre>46.225.159.225</pre>
+      </div>
+
+      <p style="color:var(--green);font-family:var(--font-mono);font-size:0.8rem;font-weight:700;letter-spacing:0.08em;margin-bottom:1.2rem;">STEP 2 — RESOLVE A PKDNS ADDRESS</p>
+      <p style="margin-bottom:1rem;">Then run this in your terminal:</p>
+      <div class="code-block" style="margin-bottom:1.5rem;">
+        <div class="code-block-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmd">dig</span> pk:cqwmibxsfx33fgs4ix1kqhuapuxbty9t33jsk5o4nzwzy9kqhuro</pre>
+      </div>
+      <p style="margin-bottom:0;">It resolves to <span style="color:var(--green);font-family:var(--font-mono);">noregistry.com</span> — no registrar involved.</p>
+    </div>
+
+    <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;padding:1.2rem 1.5rem;display:flex;gap:1rem;align-items:flex-start;text-align:left;">
+      <span style="color:#555;font-size:1.1rem;flex-shrink:0;">⚠</span>
+      <p style="color:#666;font-size:0.85rem;margin:0;line-height:1.6;"><strong style="color:#888;">Training wheels, not the destination.</strong> The public resolver is a centralised point — it can be taken down. That contradicts everything this project stands for. Use it to experience PKDNS in 30 seconds, then run your own. That's the whole point.</p>
     </div>
   </div>
 </section>
